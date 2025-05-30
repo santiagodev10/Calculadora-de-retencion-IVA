@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-T">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de IVA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos personalizados adicionales si son necesarios */
+        body {
+            font-family: 'Inter', sans-serif; /* Usando la fuente Inter como en el ejemplo de React */
+        }
+        /* Asegurar que los spinners de los input number no se muestren si se prefiere */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-100 to-purple-200 flex items-center justify-center p-4">
+
+    <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">
+            Calculadora de IVA
+        </h1>
+
+        <div class="mb-4">
+            <label for="currencySelect" class="block text-gray-700 text-sm font-semibold mb-2">
+                Seleccionar Moneda
+            </label>
+            <select id="currencySelect" class="shadow appearance-none border rounded-xl w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
+                <option value="USD">Dólar Estadounidense (USD)</option>
+                <option value="EUR">Euro (EUR)</option>
+                <option value="VES">Bolívar Soberano (VES)</option>
+                </select>
+        </div>
+
+        <div class="mb-4">
+            <label for="baseImponible" class="block text-gray-700 text-sm font-semibold mb-2">
+                Base Imponible (<span id="currencyLabelBase">USD</span>)
+            </label>
+            <input type="number" id="baseImponible" placeholder="Ej: 1000" class="shadow appearance-none border rounded-xl w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
+        </div>
+
+        <div class="mb-4">
+            <label for="alicuota" class="block text-gray-700 text-sm font-semibold mb-2">
+                Alícuota de IVA (%)
+            </label>
+            <select id="alicuota" class="shadow appearance-none border rounded-xl w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
+                <option value="16">16%</option>
+            </select>
+            <p class="text-sm text-gray-500 mt-1">
+                La alícuota de IVA está definida en 16%.
+            </p>
+        </div>
+
+        <div class="mb-6">
+            <label for="porcentajeRetencion" class="block text-gray-700 text-sm font-semibold mb-2">
+                Porcentaje de Retención (%)
+            </label>
+            <select id="porcentajeRetencion" class="shadow appearance-none border rounded-xl w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
+                <option value="75">75%</option>
+                <option value="100">100%</option>
+            </select>
+            <p class="text-sm text-gray-500 mt-1">
+                El porcentaje de retención solo puede ser 75% o 100%.
+            </p>
+        </div>
+
+        <div class="bg-blue-50 p-4 rounded-xl shadow-inner border border-blue-200">
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-lg font-semibold text-gray-700">Base Imponible + IVA:</span>
+                <span id="resultadoBaseMasIva" class="text-xl font-bold text-indigo-700">0,00</span>
+            </div>
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-lg font-semibold text-gray-700">Base Imponible:</span>
+                <span id="resultadoBaseImponible" class="text-xl font-bold text-gray-700">0,00</span>
+            </div>
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-lg font-semibold text-gray-700">Alícuota:</span>
+                <span id="resultadoAlicuota" class="text-xl font-bold text-blue-700">16.00%</span>
+            </div>
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-lg font-semibold text-gray-700">IVA Calculado:</span>
+                <span id="resultadoIvaCalculado" class="text-xl font-bold text-blue-700">0,00</span>
+            </div>
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-lg font-semibold text-gray-700">Porcentaje Retenido:</span>
+                <span id="resultadoPorcentajeRetenido" class="text-xl font-bold text-orange-700">75.00%</span>
+            </div>
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-lg font-semibold text-gray-700">Monto Retenido:</span>
+                <span id="resultadoMontoRetenido" class="text-xl font-bold text-red-700">0,00</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-lg font-semibold text-gray-700">Monto a Pagar:</span>
+                <span id="resultadoMontoAPagar" class="text-xl font-bold text-green-700">0,00</span>
+            </div>
+        </div>
+
+        <p class="text-center text-gray-500 text-xs mt-6">
+            *Los resultados se actualizan automáticamente al ingresar los valores.
+        </p>
+    </div>
+
+    <script>
+        // Esperar a que el DOM esté completamente cargado
+        document.addEventListener('DOMContentLoaded', function () {
+            // Obtener referencias a los elementos del DOM
+            const baseImponibleInput = document.getElementById('baseImponible');
+            const alicuotaSelect = document.getElementById('alicuota'); // Aunque fijo, lo referenciamos
+            const porcentajeRetencionSelect = document.getElementById('porcentajeRetencion');
+            const currencySelect = document.getElementById('currencySelect');
+            const currencyLabelBase = document.getElementById('currencyLabelBase');
+
+            // Obtener referencias a los elementos de resultado
+            const resultadoBaseMasIvaEl = document.getElementById('resultadoBaseMasIva');
+            const resultadoBaseImponibleEl = document.getElementById('resultadoBaseImponible');
+            const resultadoAlicuotaEl = document.getElementById('resultadoAlicuota');
+            const resultadoIvaCalculadoEl = document.getElementById('resultadoIvaCalculado');
+            const resultadoPorcentajeRetenidoEl = document.getElementById('resultadoPorcentajeRetenido');
+            const resultadoMontoRetenidoEl = document.getElementById('resultadoMontoRetenido');
+            const resultadoMontoAPagarEl = document.getElementById('resultadoMontoAPagar');
+
+            // Función para formatear números como moneda
+            function formatCurrency(value, currencyCode) {
+                return value.toLocaleString('es-VE', { style: 'currency', currency: currencyCode, minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            // Función principal para calcular y mostrar los resultados
+            function calcularYMostrarResultados() {
+                // Obtener los valores de los inputs
+                const baseImponible = parseFloat(baseImponibleInput.value) || 0;
+                const alicuota = parseFloat(alicuotaSelect.value) || 0; // Siempre será 16
+                const porcentajeRetencion = parseFloat(porcentajeRetencionSelect.value) || 0;
+                const selectedCurrency = currencySelect.value;
+
+                // Actualizar etiqueta de moneda en la base imponible
+                currencyLabelBase.textContent = selectedCurrency;
+                baseImponibleInput.placeholder = `Ej: 1000 en ${selectedCurrency}`;
+
+
+                // Realizar los cálculos
+                const ivaCalculado = baseImponible * (alicuota / 100);
+                const montoRetenido = ivaCalculado * (porcentajeRetencion / 100);
+                const montoAPagar = baseImponible + ivaCalculado - montoRetenido;
+                const baseMasIva = baseImponible + ivaCalculado;
+
+                // Mostrar los resultados formateados
+                resultadoBaseMasIvaEl.textContent = formatCurrency(baseMasIva, selectedCurrency);
+                resultadoBaseImponibleEl.textContent = formatCurrency(baseImponible, selectedCurrency);
+                resultadoAlicuotaEl.textContent = `${alicuota.toFixed(2)}%`; // Mostrar alícuota como porcentaje
+                resultadoIvaCalculadoEl.textContent = formatCurrency(ivaCalculado, selectedCurrency);
+                resultadoPorcentajeRetenidoEl.textContent = `${porcentajeRetencion.toFixed(2)}%`; // Mostrar porcentaje de retención
+                resultadoMontoRetenidoEl.textContent = formatCurrency(montoRetenido, selectedCurrency);
+                resultadoMontoAPagarEl.textContent = formatCurrency(montoAPagar, selectedCurrency);
+            }
+
+            // Añadir event listeners para actualizar los cálculos cuando cambien los valores
+            baseImponibleInput.addEventListener('input', calcularYMostrarResultados);
+            alicuotaSelect.addEventListener('change', calcularYMostrarResultados); // Aunque fijo, por si acaso
+            porcentajeRetencionSelect.addEventListener('change', calcularYMostrarResultados);
+            currencySelect.addEventListener('change', calcularYMostrarResultados);
+
+            // Calcular y mostrar los resultados iniciales al cargar la página
+            calcularYMostrarResultados();
+        });
+    </script>
+
+</body>
+</html>
